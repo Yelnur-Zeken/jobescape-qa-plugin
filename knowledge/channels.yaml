@@ -56,17 +56,20 @@ paypal:
   funnel_url_param: "?paywall=paypal"
   automation_status: needs_funnel_investigation
   notes:
-    - ⚠️ DISCOVERY 2026-04-30 — `?paywall=paypal` on the chat-v3/email funnel
-      DOES NOT route to a real PayPal flow. The funnel falls back to the
-      same Solidgate iframe (`#solid-payment-form-iframe`) and "Confirm
-      Payment" CTA as the default solidgate paywall. So `--paywall paypal`
-      in the executor today behaves identically to `--paywall solidgate`.
-    - To test the real PayPal flow we likely need: a different funnel entry
-      URL, a specific UTM/cohort that triggers PayPal A/B routing, or a
-      version that's PayPal-only (u15.1.1, u15.1.2, u13.0.1, u15.3.1) which
-      may force PayPal regardless of paywall flag — needs verification.
-    - When real PayPal flow is reached, expected mechanic is double_confirmation
-      (popup/scroll → second confirm) + PayPal sandbox account login. Walker
-      will need both pieces.
-    - Recommended next step: ask Yelnur how QA team currently tests PayPal-
-      only versions manually, mirror that entry URL/setup in the executor.
+    - ⚠️ DISCOVERY 2026-04-30 (3 attempts, all same outcome) —
+      `?paywall=paypal` on the chat-v3/email funnel DOES NOT route to a real
+      PayPal flow, regardless of:
+        * where in the URL the flag is placed (entry vs selling page),
+        * which subscription tile is selected (1w / 4w / 12w),
+        * order of query params.
+      The funnel always renders the same Solidgate iframe
+      (`#solid-payment-form-iframe`) + "Confirm Payment" CTA. By contrast
+      `?paywall=primer` works correctly on the same funnel — so the flag
+      mechanism is real, just paypal isn't wired up here.
+    - Working hypothesis to test next: PayPal might be UPSELL-side on
+      jobescape's codebase. Pay funnel via Solidgate (4242), then visit
+      a PayPal-only upsell like /additional_offer?upsell_version=u15.1.2 and
+      see if THAT page's purchase flow uses PayPal regardless of how the
+      funnel was paid.
+    - Until the trigger is confirmed, `--paywall paypal` in the executor is
+      effectively a no-op (logs the intent but actually runs Solidgate).

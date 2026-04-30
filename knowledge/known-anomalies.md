@@ -16,14 +16,20 @@ These are real findings the tool has surfaced. Surface them prominently in the d
 
 ## chat-v3/email funnel — `?paywall=paypal` falls back to Solidgate
 
-**Observed:** 2026-04-30 via reconnaissance run.
+**Observed:** 2026-04-30. Three runs verified, all the same outcome:
 
-**What happens:** Adding `?paywall=paypal` to the funnel selling page URL does not route to a PayPal payment flow. The funnel renders the same Solidgate iframe (`#solid-payment-form-iframe` with "Confirm Payment" CTA) it would have shown without any paywall flag. By contrast `?paywall=primer` correctly routes to the Primer hosted modal with its 3-iframe form.
+1. `?paywall=paypal` set at funnel entry (the email URL) → after walking to selling page + GET MY PLAN, Solidgate iframe shows.
+2. Funnel walked normally without paywall flag, then on selling page navigated to the same URL with `&paywall=paypal` appended (per Yelnur's explicit instructions: "вставляем в конце selling page URL") → after GET MY PLAN, Solidgate iframe still shows.
+3. Same as #2 but selecting the 1-week plan tile first (in case PayPal is tied to 1-week subs that PayPal-only versions like u15.1.2 use) → Solidgate iframe still shows.
 
-**Why it matters:** PayPal QA via the funnel walker is currently impossible — anyone setting `--paywall paypal` thinks they are testing PayPal but is actually testing Solidgate again. Manual QAers may have the same confusion.
+In all three: the visible payment form is `iframe[name="solid-payment-form-iframe"]` (Solidgate), with title "Complete checkout" and CTA "Confirm Payment". No PayPal button, no PayPal sandbox login, no PayPal-style flow appears. By contrast `?paywall=primer` does correctly route to the Primer hosted modal with its 3-iframe form on the same funnel.
 
-**Severity:** Medium (test coverage / data integrity).
+**Why it matters:** Automated QA cannot exercise the actual PayPal payment flow today — both the executor and any manual QAer setting `?paywall=paypal` will end up testing Solidgate. PayPal-only versions (u15.1.1, u15.1.2, u13.0.1, u15.3.1) cannot have their purchase scenarios validated until the correct PayPal-trigger mechanism is identified.
 
-**Recommendation:** Investigate how PayPal A/B routing is supposed to be triggered on the chat-v3 funnel (UTM? cookie? specific URL? paypal-only versions like u15.1.x that force the channel?). Once the right entry is identified, update `register.ts` to use it for `--paywall paypal`.
+**Severity:** Medium (test coverage gap).
+
+**Recommendation:** Ask the funnel team how PayPal A/B routing is configured on stage — is it UTM-driven, account-segment-driven, geo-IP-driven, or only enabled on a different funnel entry URL? Until then the executor's `--paywall paypal` flag is a no-op (logs the intent but actually runs Solidgate).
+
+**Alternative hypothesis worth testing next:** maybe PayPal-only **upsell** versions (e.g. u15.1.2) trigger their own PayPal flow at the upsell page step regardless of how the funnel was paid — i.e. PayPal is upsell-side, not funnel-side, on this codebase. Test by paying funnel via Solidgate (4242), then visiting `/additional_offer?upsell_version=u15.1.2`, click buy, see whether PayPal appears.
 
 ## (Add new anomalies below as the tool surfaces them.)
