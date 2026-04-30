@@ -62,10 +62,10 @@ After receiving answers, **save the new version to `versions.yaml`** with `verif
 Read `knowledge/channels.yaml`. Apply the rules:
 
 - **Solidgate** (`--paywall solidgate`) — full automation. Use card 4242 for funnel registration on success runs, card 4123 for funnel registration on `check_decline` runs.
-- **Primer** (`--paywall primer`) — funnel walker reaches the Primer iframe step but the iframe filler is not yet implemented (different field structure than Solidgate). For now: `check_ui` runs, `check_works` does not. Tell the user.
-- **PayPal** (`--paywall paypal`) — funnel walker reaches the PayPal flow but the `double_confirmation` walker (popup/scroll → second confirm click) is not yet implemented. Sandbox PayPal credentials also need to be confirmed with the team. For now: `check_ui` runs, `check_works` does not. Tell the user.
+- **Primer** (`--paywall primer`) — full automation as of 2026-04-30. Walker uses the Primer hosted modal: clicks "Complete Payment" on the page, fills 3 separate card iframes inside the dialog, submits. 4242 card works.
+- **PayPal** (`--paywall paypal`) — ⚠️ chat-v3 funnel currently **falls back to Solidgate** when paywall=paypal is set (see `known-anomalies.md`). The executor will run, but the user will actually be testing Solidgate, not PayPal. Tell the user this honestly. To genuinely test PayPal-only versions (u15.1.1, u15.1.2, u13.0.1, u15.3.1) — manual QA only until the correct funnel-entry URL is identified.
 
-Always pick the right `--paywall` flag based on the channel the user picked (or the version's available channels). Do NOT silently fall back to solidgate if the user asked for paypal/primer — be explicit about what's automatable.
+Always pick the right `--paywall` flag based on the channel the user picked (or the version's available channels). Do NOT silently fall back to solidgate if the user asked for paypal — be explicit about the discovery: `paywall=paypal` IS what they should use, but it currently behaves like Solidgate, so the run results don't actually reflect the PayPal flow.
 
 ---
 
@@ -102,13 +102,14 @@ cd ~/jobescape-auto-qa && HEADED=1 npx tsx src/index.ts \
 ```
 
 Examples:
-- `--version u15.4.3 --scenario check_works --paywall solidgate --decisions buy,buy,buy`
+- `--version u15.4.3 --scenario check_works --paywall solidgate --subscription 4week --decisions buy,buy,buy`
 - `--version u13.0.4 --scenario check_works --paywall solidgate --decisions skip_chase_skip,skip` (page 2 has no chase → plain `skip`)
-- `--version u15.1.1 --scenario check_ui --paywall paypal` (PayPal-only versions today are limited to check_ui until the double_confirmation walker is added)
+- `--version u15.4.3 --scenario check_works --paywall primer --decisions buy,buy,buy` (Primer is fully supported as of 2026-04-30)
 - `--version u15.4.3 --scenario check_already_purchased --paywall solidgate`
 - `--version u15.4.3 --scenario check_decline --paywall solidgate`
+- `--version u15.4.3 --scenario check_works --paywall solidgate --subscription 12week --decisions buy,buy,buy` (12-week subscription)
 
-**`--paywall` defaults to solidgate** if omitted. Always pass it explicitly to make the run record the intended channel.
+**`--paywall` defaults to solidgate, `--subscription` defaults to 4week** if omitted. Always pass them explicitly to make the run record the intended cohort.
 
 Each run takes ~5 minutes. **Run them serially** (the executor opens a single Chromium window — parallel runs would conflict). Tell the user which run is in flight (`Запускаю прогон 3/6: skip_chase_buy × 3...`).
 

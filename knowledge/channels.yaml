@@ -22,42 +22,51 @@ solidgate:
 
 primer:
   description: |
-    Primer is an alternative payment-orchestration layer. Sometimes
-    served instead of Solidgate based on funnel A/B test routing.
+    Primer is an alternative payment-orchestration layer. Available as a
+    co-channel on many versions (u15.0.1, u15.4.3, etc).
   cards:
-    success: TBD_RECON_NEEDED
-    decline_subsequent: TBD_RECON_NEEDED
+    success: "4242424242424242"     # confirmed empirically 2026-04-30
+    decline_subsequent: TBD_RECON   # likely the same 4123… as Solidgate; not yet verified
   mechanic: one_click
   funnel_url_param: "?paywall=primer"
-  automation_status: needs_iframe_recon
+  automation_status: supported
   pricing_note: |
     Empirically Primer-channel upsells often show ~30-40% higher prices
     vs the Solidgate variant of the same version (per Yelnur).
   notes:
-    - Executor supports --paywall primer (the URL flag works); the funnel
-      walker reaches the Primer iframe step.
-    - Primer iframe is at https://sdk.primer.io/web/hosted-pages/... — has
-      its own field structure (different from Solidgate). Walker needs a
-      Primer-specific iframe filler.
-    - First step: run --paywall primer once to capture the iframe DOM, then
-      add the field selectors.
+    - Executor supports --paywall primer end-to-end with --scenario check_works.
+    - Flow shape (different from Solidgate's inline iframe):
+      1. Click GET MY PLAN on selling page
+      2. A "Complete Payment" button appears on the page
+      3. Click it → a [role=dialog] modal opens with the Primer hosted form
+      4. Modal contains 3 separate iframes (one each for card / expiry / CVV)
+         with localised titles: "Номер карты" / "Срок действия (ММ/ГГ)" / "CVV"
+         (ru) or "Card Number" / "Expiration Date" / "CVV" (en)
+      5. Submit button inside the modal is also "Complete Payment"
+    - Verified 2026-04-30: 4242 success card processes successfully on Primer
+      and lands the user on /auth/register, identical handoff to Solidgate.
 
 paypal:
   description: |
     PayPal channel. Available on PayPal-only versions (u15.1.1, u15.1.2,
-    u13.0.1, u15.3.1) and as a co-channel on others.
+    u13.0.1, u15.3.1) and as a co-channel on others (per xlsx).
   mechanic: double_confirmation
   cards:
-    note: PayPal flow uses sandbox account login, not card input.
+    note: True PayPal flow uses sandbox account login, not card input.
   funnel_url_param: "?paywall=paypal"
-  automation_status: needs_walker_extension
+  automation_status: needs_funnel_investigation
   notes:
-    - Executor supports --paywall paypal (URL flag works) but walker needs
-      a double_confirmation handler: after first buy click, a popup/scroll
-      reveals a second confirm CTA — the walker has to find and click it.
-    - Sandbox login: PayPal staging accepts test PayPal accounts; need to
-      confirm Jobescape's sandbox setup (test PayPal email/password).
-    - Once double_confirmation is wired + sandbox creds are known, all
-      PayPal-only upsells become fully automatable.
-    - Until then: --scenario check_ui + --paywall paypal works (just verifies
-      the PayPal flow page renders); check_works requires the walker.
+    - ⚠️ DISCOVERY 2026-04-30 — `?paywall=paypal` on the chat-v3/email funnel
+      DOES NOT route to a real PayPal flow. The funnel falls back to the
+      same Solidgate iframe (`#solid-payment-form-iframe`) and "Confirm
+      Payment" CTA as the default solidgate paywall. So `--paywall paypal`
+      in the executor today behaves identically to `--paywall solidgate`.
+    - To test the real PayPal flow we likely need: a different funnel entry
+      URL, a specific UTM/cohort that triggers PayPal A/B routing, or a
+      version that's PayPal-only (u15.1.1, u15.1.2, u13.0.1, u15.3.1) which
+      may force PayPal regardless of paywall flag — needs verification.
+    - When real PayPal flow is reached, expected mechanic is double_confirmation
+      (popup/scroll → second confirm) + PayPal sandbox account login. Walker
+      will need both pieces.
+    - Recommended next step: ask Yelnur how QA team currently tests PayPal-
+      only versions manually, mirror that entry URL/setup in the executor.
