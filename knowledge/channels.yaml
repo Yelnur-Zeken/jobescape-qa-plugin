@@ -48,34 +48,44 @@ primer:
 
 paypal:
   description: |
-    PayPal channel. The `paywall=paypal` flag marks the user as PayPal
-    cohort for downstream UPSELL routing — it does NOT change how the
-    funnel itself is paid. Funnel checkout always uses the Solidgate
-    iframe; you fund it with the regular 4242 success card. PayPal-only
-    upsells (u15.1.1, u15.1.2, u15.1.3, u13.0.1, u15.3.1) then use the
-    double_confirmation purchase mechanic on the upsell page itself.
+    PayPal-channel upsells. NO URL flag is required — the upsell version
+    itself (u15.1.1, u15.1.2, u15.1.3, u13.0.1, u15.3.1) is server-side
+    designated for PayPal cohort and renders its own double_confirmation
+    UI on the upsell page. To QA one of these versions: walk the funnel
+    normally via Solidgate (4242 card), then navigate to the upsell URL
+    with `?upsell_version=u15.1.x`. The PayPal mechanic is entirely
+    expressed in the upsell page itself.
   mechanic: double_confirmation
   cards:
     funnel: "4242424242424242"   # funnel pays via Solidgate iframe regardless
-    note: PayPal flow's "PayPal-ness" is in the upsell mechanic, not in card input.
-  funnel_url_param: "&paywall=paypal"   # appended at SELLING PAGE, not entry
+    note: |
+      "PayPal-ness" is in the upsell version's mechanic + UI, not in card
+      input. The funnel uses Solidgate cards (4242 success / 4123 decline)
+      regardless of which upsell version you'll target afterwards.
+  funnel_url_param: null   # not needed — pass --paywall solidgate (default)
   automation_status: supported
   notes:
     - "Verified empirically 2026-04-30 on u15.1.3:"
-    - "  flow: walk funnel → on selling page navigate to current URL +"
-    - "        &paywall=paypal → click GET MY PLAN → fill Solidgate iframe"
-    - "        with 4242 → register → land on /additional_offer → override"
-    - "        URL to ?upsell_version=u15.1.3"
-    - "  on click 'Confirm Payment' on the upsell page:"
+    - "  Walk funnel via Solidgate (no paypal flag), register, then go to"
+    - "  /additional_offer?upsell_version=u15.1.3 — the upsell page renders"
+    - "  in double_confirmation mode automatically."
+    - "  On click 'Confirm Payment' on the upsell page:"
     - "    1) pr_webapp_upsell_payment_intent_click fires"
     - "    2) 'Confirm your payment' popup opens with summary + another"
     - "       Confirm Payment button"
-    - "  on click of the popup's Confirm Payment:"
+    - "  On click of the popup's Confirm Payment:"
     - "    3) pr_webapp_upsell_purchase_click fires"
     - "    4) pr_webapp_upsell_successful_purchase fires"
-    - "  (NOTE: original spec said `purchase_intent_click` but the actual"
-    - "  event is `payment_intent_click` — confirmed empirically.)"
-    - "u15.1.1 returned 'UH OH... technical difficulties' for our Solidgate-"
-    - "registered user. Likely u15.1.1 enforces strict PayPal-cohort access"
-    - "while u15.1.3 is more permissive. Test u15.1.1 with a real PayPal"
-    - "registration to confirm; or surface to product team."
+    - "  (Original spec said `purchase_intent_click` but actual event is"
+    - "  `payment_intent_click`.)"
+    - "Decline scenario: independent of channel — append &paywall=solidgate"
+    - "to the upsell URL and use 4123 in the funnel. Works on PayPal-version"
+    - "upsells too (u15.1.x decline path is the standard solidgate flow)."
+    - "u15.1.1 returned 'UH OH... technical difficulties' in our test —"
+    - "investigate version-specific access rules; u15.1.3 is a safer proxy"
+    - "for verifying the double_confirmation mechanic."
+  cli_flag_note: |
+    The --paywall paypal CLI flag exists for clarity but is functionally
+    an ALIAS for --paywall solidgate at the funnel step (PayPal-flagged
+    versions don't need URL routing). Either flag works; the version
+    determines the mechanic via UPSELL_META[version].mechanic.

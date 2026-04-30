@@ -16,11 +16,13 @@ These are real findings the tool has surfaced. Surface them prominently in the d
 
 ## RESOLVED — PayPal channel was misunderstood, not broken
 
-**Resolution:** The `paywall=paypal` flag is a USER-COHORT flag, not a funnel-payment-method flag. The funnel checkout itself always uses the Solidgate iframe regardless of paywall flag — that's by design. PayPal upsells (u15.1.x family) implement the **double_confirmation** mechanic on the upsell page itself: first click on Confirm Payment fires `pr_webapp_upsell_payment_intent_click` and opens a "Confirm your payment" popup; second click in the popup fires the actual purchase events.
+**Final understanding (Yelnur clarification 2026-04-30):** No URL flag is required to test PayPal-channel upsells. The upsell version itself (u15.1.x) is server-side designated for PayPal cohort and renders the **double_confirmation** mechanic in its own UI. To QA: walk the funnel normally via Solidgate (4242 card), register, then navigate to `?upsell_version=u15.1.x`. The first Confirm Payment click fires `pr_webapp_upsell_payment_intent_click` + opens a popup; the second Confirm Payment click in the popup fires `purchase_click` + `successful_purchase`.
 
-The executor now supports this end-to-end (verified 2026-04-30 on u15.1.3). The earlier "fallback to Solidgate" finding was technically true but irrelevant — the test was looking for a PayPal payment form on the funnel side, when the actual PayPal-channel signal lives in the upsell mechanic.
+For decline on a PayPal-channel upsell: same as any other version — append `&paywall=solidgate` to the upsell URL and use the 4123 decline card in the funnel. PayPal-ness lives entirely in the upsell page UI; decline routing is processor-agnostic.
 
-(Original finding kept below for context.)
+The executor's `--paywall paypal` flag is now functionally an alias for `--paywall solidgate` at the funnel step (kept for declarative clarity in QA reports). Verified end-to-end on u15.1.3 2026-04-30.
+
+(Original investigation kept below for context.)
 
 ---
 
