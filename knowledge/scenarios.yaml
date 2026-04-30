@@ -1,0 +1,88 @@
+# Base QA scenarios. Loaded by qa-upsell skill to build the test plan.
+# Each scenario maps to a CLI invocation of the executor at ~/jobescape-auto-qa.
+
+base_scenarios:
+  - id: check_ui
+    description: Verify the upsell page renders, images load, and pr_webapp_upsell_view fires with the right upsell_version.
+    invocation: "--scenario check_ui"
+    applies_to: every_version
+    duration_min: 5
+
+  - id: check_works_buy_all
+    description: |
+      Buy on every page (standard variant). Validates basic purchase flow,
+      page progression, and successful_purchase event per page.
+    invocation: "--scenario check_works --decisions <buy>×pages"
+    applies_to: every_version
+    duration_min: 5
+    decisions_template:
+      pages_1: "buy"
+      pages_2: "buy,buy"
+      pages_3: "buy,buy,buy"
+
+  - id: check_works_skip_chase_skip_all
+    description: |
+      Skip standard → see chase modal → skip chase on every page.
+      Validates skip_click event, chase modal "Continue/Got it" button,
+      chase=true view event, chase price observation.
+    invocation: "--scenario check_works --decisions <skip_chase_skip>×pages"
+    applies_to: versions_with_chase_on_every_page
+    fallback: |
+      If a page has no chase variant (e.g. u13.0.4 page 2), use 'skip' for
+      that page instead of skip_chase_skip — it just skips without modal.
+    duration_min: 5
+
+  - id: check_works_skip_chase_buy_all
+    description: |
+      Skip standard → chase modal → buy chase. On every page.
+      Validates chase variant is buyable + chase price = event amount.
+    invocation: "--scenario check_works --decisions <skip_chase_buy>×pages"
+    applies_to: versions_with_chase_on_every_page
+    duration_min: 5
+
+  - id: check_already_purchased
+    description: |
+      Buy page 1 → reload → click Buy AGAIN → expect "Already purchased"
+      modal + pr_webapp_upsell_unsuccessful_purchase event + advance to next page.
+    invocation: "--scenario check_already_purchased"
+    applies_to: every_version
+    duration_min: 6
+
+  - id: check_decline
+    description: |
+      Walk funnel with decline-subsequent card (e.g. 4123 for Solidgate),
+      then click buy on upsell → backend retry-charge declines → popup
+      with "decline" text + pr_webapp_upsell_unsuccessful_purchase event +
+      retry CTA.
+    invocation: "--scenario check_decline"
+    applies_to: solidgate_or_primer  # not paypal (manual only)
+    requires: decline_card_for_channel
+    duration_min: 5
+
+# When to run mixed paths (between buy/skip combinations on multi-page upsells):
+# Run when conditional pricing is suspected on later pages, OR when the user
+# explicitly asks. Otherwise the 4 base check_works variants above cover the
+# decision tree well enough.
+mixed_path_examples:
+  - description: Page 1 fully skipped (chase too), page 2 buy → does page 2 standard price differ?
+    decisions: "skip_chase_skip,buy"
+  - description: Page 1 buy, page 2 fully skipped → does page 3 differ?
+    decisions: "buy,skip_chase_skip,buy"
+  - description: All pages skipped (no chase) — fallthrough exit flow.
+    decisions: "skip,skip,skip"
+
+custom_assertions:
+  description: |
+    User-supplied custom checks beyond base scenarios. Examples:
+      - "verify the disclaimer text on page 2 contains 'cancel anytime'"
+      - "confirm page 3 chase price is exactly $47.99"
+      - "check that the hero image loads in <2s"
+  how_to_implement: |
+    The executor's check_works run records full DOM prices and screenshots
+    per page. After the run completes, read report.json and:
+    - For text/price assertions: search observations[].domPrices or
+      load the screenshot via Read tool and verify visually
+    - For load-time assertions: re-run with diagnostic mode (TBD) or
+      inspect the network log
+    Surface custom assertions in the dashboard summary, separate from
+    base-scenario verdicts.

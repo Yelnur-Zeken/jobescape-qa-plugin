@@ -1,0 +1,16 @@
+{
+  "name": "jobescape-qa",
+  "version": "0.1.0",
+  "description": "Automated QA for jobescape upsell flows. Drives the Playwright-based executor at ~/jobescape-auto-qa through the full base-scenario matrix (UI / success / decline / already-purchased / skip+chase) for any upsell version, asks the right questions for new versions, and presents a dashboard-style summary in chat.",
+  "author": {
+    "name": "Yelnur Zeken"
+  },
+  "keywords": [
+    "qa",
+    "jobescape",
+    "upsell",
+    "playwright",
+    "automation",
+    "regression"
+  ]
+}

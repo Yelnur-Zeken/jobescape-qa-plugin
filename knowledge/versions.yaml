@@ -1,0 +1,269 @@
+# Known upsell versions. Source: Upsells.xlsx (last synced 2026-04-30) plus
+# empirical findings from automated QA runs. When adding a verified observation,
+# include `verified: true` and the date.
+
+# Key fields:
+#   pages: 1 | 2 | 3
+#   mechanic: one_click | double_confirmation | two_click
+#   channels: list of channels this version is available on
+#   subscriptions: which sub types it serves
+#   prices: per page, per variant, per channel — when known
+#   verified: whether prices/mechanic were empirically confirmed by the tool
+#   notes: anything else the QAer should know
+
+# ─────────────────────────────────────────────────────────────────────
+# Verified by automated QA in this codebase (highest confidence)
+# ─────────────────────────────────────────────────────────────────────
+
+u13.0.4:
+  offer: "The Unlimited AI Toolkit + Prompts Library (2-page)"
+  pages: 2
+  mechanic: one_click
+  channels: [solidgate]
+  subscriptions: ["4week", "12week"]
+  status: active
+  buy_cta_text: "Confirm Payment"
+  prices:
+    solidgate_4w:
+      page_1: { standard: 49.99, chase: 39.99 }
+      page_2: { standard: 1.99, chase: null }   # page 2 has NO chase variant
+  conditional_pricing: false  # confirmed empirically — page 2 always $1.99
+  verified: true
+  verified_date: 2026-04-30
+  notes:
+    - Page 2 lacks a chase variant. Use `skip` (not `skip_chase_skip`) on page 2.
+    - Buy CTA is "Confirm Payment".
+    - Post-purchase modal CTA is "Continue".
+    - Already-purchased modal CTA is "Next step".
+
+u15.4.3:
+  offer: "TBD (3-page A/B test)"
+  pages: 3
+  mechanic: one_click
+  channels: [solidgate, primer]
+  subscriptions: ["4week", "12week"]
+  status: ab_test
+  buy_cta_text: "Add to my plan"
+  prices:
+    solidgate_4w:
+      page_1: { standard: 99.99, chase: 79.99 }
+      page_2: { standard: 79.99, chase: 63.99 }
+      page_3: { standard: 59.99, chase: 47.99 }
+  conditional_pricing: false  # confirmed across buy_all / skip_skip / mixed
+  verified: true
+  verified_date: 2026-04-30
+  notes:
+    - Buy CTA is "Add to my plan" (different from u13.0.4's "Confirm Payment").
+    - Chase modal CTA is "Got it".
+    - "Add to my plan" works on both standard and chase variants.
+    - ⚠️ KNOWN ANOMALY — see known-anomalies.md: page-3 chase event payload
+      arrives with upsell_order=1 (should be 3). Affects analytics cohorts.
+
+# ─────────────────────────────────────────────────────────────────────
+# Documented in xlsx but not yet verified by automated QA
+# ─────────────────────────────────────────────────────────────────────
+
+u13.0.0:
+  offer: "The Unlimited AI Toolkit for 2026"
+  pages: 1
+  mechanic: one_click
+  channels: [solidgate]
+  subscriptions: ["4week", "12week"]
+  status: inactive
+  prices:
+    solidgate:
+      page_1: { full: 99.99, default: 49.99, chase: 39.99 }
+  verified: false
+
+u13.0.1:
+  offer: "The Unlimited AI Toolkit for 2026"
+  pages: 1
+  mechanic: double_confirmation
+  channels: [paypal]
+  subscriptions: ["1week"]
+  status: inactive
+  prices:
+    paypal:
+      page_1: { full: 99.99, default: 39.99, chase: 29.99 }
+  verified: false
+
+u13.0.2:
+  offer: "The Unlimited AI Toolkit for 2026 (Email Upsell)"
+  pages: 1
+  mechanic: one_click
+  channels: [primer, solidgate, paypal]
+  subscriptions: ["1week", "4week", "12week"]
+  status: active
+  type: email_upsell
+  prices:
+    page_1: { full: 99.99, default: 49.99, chase: 39.99 }
+  verified: false
+
+u13.0.3:
+  offer: "Unlimited AI Toolkit + Prompts Library (2-page)"
+  pages: 2
+  mechanic: one_click
+  channels: [solidgate, primer]
+  subscriptions: ["1week"]
+  status: active
+  prices:
+    solidgate_1w:
+      page_1: { full: 19.99, default: 1.99 }
+      page_2: { full: 19.99, default: 0.99 }
+  verified: false
+
+u14.0.0:
+  offer: "AI Toolkit + 28-Day Growth Hacking Challenge (2-page)"
+  pages: 2
+  mechanic: two_click  # NB: xlsx labels this "Two click" — verify what this means in practice
+  channels: [primer, solidgate]
+  subscriptions: ["4week", "12week"]
+  status: inactive
+  prices:
+    page_1: { full: 99.99, default: 49.99, chase: 39.99 }
+    page_2: { full: 89.99, default: 29.99, chase: 22.99 }
+  verified: false
+
+u15.0.1:
+  offer: "The Unlimited AI Toolkit for 2026 (Primer)"
+  pages: 1
+  mechanic: one_click
+  channels: [primer]
+  subscriptions: ["4week", "12week"]
+  status: active
+  prices:
+    primer:
+      page_1: { full: 139.99, default: 69.99, chase: 55.99 }
+  verified: false
+
+u15.0.2:
+  offer: "AI Toolkit + 28-Day Growth Hacking (mistake — 2 upsells launched)"
+  pages: 1  # xlsx says 1 but pricing shows 2 upsells — confusing
+  mechanic: two_click
+  channels: [primer, solidgate]
+  subscriptions: ["4week", "12week"]
+  status: inactive
+  notes: "Xlsx says experiment was launched incorrectly with 2 upsells instead of 1."
+  verified: false
+
+u15.1.1:
+  offer: "The Unlimited AI Toolkit for 2026 (PayPal)"
+  pages: 1
+  mechanic: double_confirmation
+  channels: [paypal]
+  subscriptions: ["4week", "12week"]
+  status: active
+  prices:
+    paypal:
+      page_1: { full: 139.99, default: 69.99, chase: 55.99 }
+  verified: false
+  notes: "PayPal-only — automation BLOCKED. Manual QA only."
+
+u15.1.2:
+  offer: "The Unlimited AI Toolkit for 2026 (PayPal 1w)"
+  pages: 1
+  mechanic: double_confirmation
+  channels: [paypal]
+  subscriptions: ["1week"]
+  status: active
+  prices:
+    paypal:
+      page_1: { full: 99.99, default: 39.99, chase: 29.99 }
+  verified: false
+  notes: "PayPal-only — automation BLOCKED. Manual QA only."
+
+u15.3.0:
+  offer: "AI Toolkit + Prompts Library (Primer A/B test)"
+  pages: 1  # xlsx unclear — pricing implies 2-page structure
+  mechanic: one_click
+  channels: [primer]
+  subscriptions: ["4week", "12week"]
+  status: ab_test
+  prices:
+    primer:
+      page_1: { full: 139.99, default: 69.99, chase: 55.99 }
+      page_2: { full: 89.99, default: 29.99, chase: 22.99 }
+  verified: false
+  notes: "Compliance Test, with Clear Disclaimer. Duplicate of u15.0.1 with Disclaimer."
+
+u15.3.1:
+  offer: "AI Toolkit + Prompts Library (PayPal A/B test)"
+  pages: 1
+  mechanic: double_confirmation
+  channels: [paypal]
+  subscriptions: ["4week", "12week"]
+  status: ab_test
+  prices:
+    paypal:
+      page_1: { full: 139.99, default: 69.99, chase: 55.99 }
+      page_2: { full: 89.99, default: 29.99, chase: 22.99 }
+  verified: false
+  notes: "PayPal-only — automation BLOCKED. Manual QA only."
+
+# Compliance variants (typically duplicates of base versions with different disclaimers)
+u16.1.0: { offer: "AI Toolkit (compliance test, welcome screen)", duplicate_of: u13.0.0, status: inactive, verified: false }
+u16.1.1: { offer: "AI Toolkit (compliance test, welcome screen)", duplicate_of: u15.0.1, status: inactive, verified: false }
+u16.4.0: { offer: "AI Toolkit (compliance test, Buy & Unlock button)", duplicate_of: u13.0.0, status: inactive, verified: false }
+u16.4.1: { offer: "AI Toolkit (compliance test, Buy & Unlock button)", duplicate_of: u15.0.1, status: inactive, verified: false }
+u16.5.0: { offer: "AI Toolkit (compliance test, clear disclaimer)", duplicate_of: u13.0.0, status: inactive, verified: false }
+u16.5.1: { offer: "AI Toolkit (compliance test, clear disclaimer)", duplicate_of: u15.0.1, status: inactive, verified: false }
+
+u11.0.0:
+  offer: "28-Day Growth Hacking Challenge"
+  pages: 1
+  mechanic: one_click
+  channels: [solidgate, primer]
+  subscriptions: ["4week", "12week"]
+  status: inactive
+  prices:
+    page_1: { full: 99.99, default: 49.99, chase: 39.99 }
+  verified: false
+
+u12.0.0:
+  offer: "Ready-To-Monetize AI Agents Bundle"
+  pages: 1
+  mechanic: one_click
+  channels: [solidgate, primer]
+  subscriptions: ["4week", "12week"]
+  status: inactive
+  prices:
+    page_1: { full: 99.99, default: 49.99, chase: 39.99 }
+  verified: false
+
+u1.0.0:
+  offer: "Prompts Library"
+  pages: 1
+  mechanic: one_click
+  channels: [solidgate, paypal, primer]
+  subscriptions: ["4week", "12week"]
+  status: inactive
+  buy_cta_text: "Confirm Payment"
+  prices:
+    solidgate:
+      page_1: { full: 99.99, default: 49.99, chase: 39.99 }
+  verified: true
+  verified_date: 2026-04-29
+  notes: "Old upsell. Earliest verified version."
+
+u1.0.1:
+  offer: "Prompts Library (double confirmation)"
+  pages: 1
+  mechanic: double_confirmation
+  channels: [solidgate, paypal, primer]
+  subscriptions: ["4week", "12week"]
+  status: inactive
+  prices:
+    page_1: { full: 99.99, default: 49.99, chase: 39.99 }
+  verified: false
+
+e13.0.0:
+  offer: "AI Toolkit (Email Upsell)"
+  pages: 1
+  mechanic: one_click
+  channels: [primer, solidgate, paypal]
+  subscriptions: ["1week", "4week", "12week"]
+  status: active
+  type: email_upsell
+  prices:
+    page_1: { full: 99.99, default: 49.99, chase: 39.99 }
+  verified: false

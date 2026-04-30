@@ -1,0 +1,23 @@
+{
+  "name": "yelnur-zeken",
+  "owner": {
+    "name": "Yelnur Zeken"
+  },
+  "plugins": [
+    {
+      "name": "jobescape-qa",
+      "source": {
+        "source": "github",
+        "repo": "Yelnur-Zeken/jobescape-qa-plugin"
+      },
+      "description": "Automated QA for jobescape upsell flows — base-scenario matrix + AI-guided question flow for new versions.",
+      "version": "0.1.0",
+      "keywords": [
+        "qa",
+        "upsell",
+        "jobescape",
+        "automation"
+      ]
+    }
+  ]
+}

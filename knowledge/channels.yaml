@@ -1,0 +1,55 @@
+# Channel-specific rules. Loaded by qa-upsell skill before each run.
+
+solidgate:
+  description: |
+    Default Solidgate processor. Most reliable for automation —
+    one-click charge of the saved card from registration.
+  cards:
+    success: "4242424242424242"
+    decline_subsequent: "4123212486997559"
+    # 4123 is the "succeeds first charge, declines on subsequent" test card.
+    # Used for check_decline: register with 4123 at funnel checkout (first
+    # charge succeeds → user reaches upsell), then upsell click attempts to
+    # recharge same card → declines → unsuccessful_purchase event fires.
+  mechanic: one_click
+  automation_status: supported
+  funnel_url_param: "?paywall=solidgate"
+  iframe_selector: 'iframe[name="solid-payment-form-iframe"]'
+  notes:
+    - Card 4242 always succeeds.
+    - Card 4123 succeeds on funnel registration but declines on upsell recharge.
+    - Tool already supports this channel end-to-end.
+
+primer:
+  description: |
+    Primer is an alternative payment-orchestration layer. Sometimes
+    served instead of Solidgate based on funnel A/B test routing.
+  cards:
+    success: TBD_RECON_NEEDED
+    decline_subsequent: TBD_RECON_NEEDED
+  mechanic: one_click
+  automation_status: not_yet_supported
+  pricing_note: |
+    Empirically Primer-channel upsells often show ~30-40% higher prices
+    vs the Solidgate variant of the same version (per Yelnur).
+  notes:
+    - Tool's funnel walker currently forces ?paywall=solidgate.
+    - To support Primer: recon the Primer iframe, add a primer payment
+      adapter, parameterise --channel in the runner.
+
+paypal:
+  description: |
+    PayPal channel. Specific to versions like u15.1.1, u15.1.2 (PayPal-only).
+  mechanic: double_confirmation
+  cards:
+    note: PayPal does not use card-input fields — uses PayPal account login.
+  automation_status: BLOCKED
+  reason: |
+    PayPal sandbox login flow uses OAuth + may include 2FA. Even with sandbox
+    accounts, automation reliably fails at the PayPal-side auth screen.
+  notes:
+    - Recommend manual QA for PayPal-only versions.
+    - Tool can still verify check_ui (page renders, view event fires) without
+      completing purchase, but check_works/check_decline are not automatable.
+    - On PayPal upsells the buy click triggers a popup/scroll-to-confirm
+      sequence (this is what "double_confirmation" mechanic refers to in xlsx).
