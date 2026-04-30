@@ -49,13 +49,49 @@ primer:
 paypal:
   description: |
     PayPal-channel upsells. NO URL flag is required — the upsell version
-    itself (u15.1.1, u15.1.2, u15.1.3, u13.0.1, u15.3.1) is server-side
-    designated for PayPal cohort and renders its own double_confirmation
-    UI on the upsell page. To QA one of these versions: walk the funnel
-    normally via Solidgate (4242 card), then navigate to the upsell URL
-    with `?upsell_version=u15.1.x`. The PayPal mechanic is entirely
-    expressed in the upsell page itself.
-  mechanic: double_confirmation
+    itself (u15.1.1, u15.1.2, u15.1.3, u13.0.1, u15.3.1, u1.1.3_claude)
+    is server-side designated for PayPal cohort and renders its own
+    purchase-mechanic UI on the upsell page. To QA one of these versions:
+    walk the funnel normally via Solidgate (4242 card), then navigate to
+    the upsell URL with `?upsell_version=u15.1.x`. The PayPal mechanic is
+    entirely expressed in the upsell page itself.
+  mechanics:
+    - double_confirmation       # u15.1.x family — click → "Confirm your payment" popup → click in popup
+    - scroll_gated_one_click    # u1.1.3_claude — verified end-to-end 2026-04-30. First click on
+                                # "Confirm Payment" scrolls the page to the price + disclaimer
+                                # block (~1000px down on stage). NO purchase events fire on the
+                                # first click. Second click (or any click after the user has
+                                # already scrolled past the price) acts as plain one_click and
+                                # fires purchase_click + successful_purchase. The intent of
+                                # the gate is legal/UX — user must see the $-amount + the
+                                # "you agree to be charged $X" disclaimer before paying.
+  mechanic: double_confirmation  # legacy field — deprecated, use `mechanics` list
+
+  # How the executor handles each PayPal mechanic (as of 2026-04-30):
+  #   double_confirmation      — supported. doBuy() clicks the page-level
+  #                              Confirm Payment, waits for payment_intent_click
+  #                              event + [role=dialog] popup, then clicks the
+  #                              popup's Confirm Payment.
+  #   scroll_gated_one_click   — supported. doBuy() calls scrollPriceIntoView()
+  #                              before clickBuyButton() to satisfy the gate,
+  #                              then runs the standard one_click flow.
+  #                              IMPORTANT: this BYPASSES the scroll-gesture
+  #                              path — it does not validate that the FIRST
+  #                              unaided click actually scrolls. To verify
+  #                              scroll-gesture behavior empirically, run
+  #                              src/probes/scroll-gate-claude.ts.
+  executor_handlers:
+    double_confirmation: { handler: "doBuy(double_confirmation)", verified_on: ["u15.1.3"] }
+    scroll_gated_one_click: { handler: "doBuy(scroll_gated_one_click)", verified_on: ["u1.1.3_claude"], probe_script: "src/probes/scroll-gate-claude.ts" }
+  stage_limitations:
+    decline_flow_validation: |
+      ⚠️ PayPal decline-event validation runs on PROD ONLY — on stage the
+      pr_webapp_upsell_unsuccessful_purchase event tied to PayPal cohort
+      does NOT fire / is NOT checked the way it does in production. Any
+      stage-side `--paywall paypal` + 4123 (or equivalent decline-card)
+      run will exhibit Solidgate-style decline behavior, not the actual
+      PayPal-cohort decline path. Don't draw conclusions about PayPal
+      decline from stage runs. Verify PayPal decline behavior on prod.
   cards:
     funnel: "4242424242424242"   # funnel pays via Solidgate iframe regardless
     note: |
