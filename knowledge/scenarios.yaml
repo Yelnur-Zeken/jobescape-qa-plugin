@@ -11,7 +11,11 @@ base_scenarios:
   - id: check_works_buy_all
     description: |
       Buy on every page (standard variant). Validates basic purchase flow,
-      page progression, and successful_purchase event per page.
+      page progression, and successful_purchase event per page. For PayPal
+      upsells (double_confirmation mechanic) the executor automatically
+      drives the two-click flow: first click fires payment_intent_click and
+      opens the "Confirm your payment" popup; second click in the popup
+      fires purchase_click + successful_purchase.
     invocation: "--scenario check_works --decisions <buy>×pages"
     applies_to: every_version
     duration_min: 5

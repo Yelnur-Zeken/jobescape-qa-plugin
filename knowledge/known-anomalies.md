@@ -14,6 +14,16 @@ These are real findings the tool has surfaced. Surface them prominently in the d
 
 **Recommendation:** Surface to data team / product analytics. Worth checking other 3-page upsells (when added) to see if the bug is generalised or specific to u15.4.3.
 
+## RESOLVED — PayPal channel was misunderstood, not broken
+
+**Resolution:** The `paywall=paypal` flag is a USER-COHORT flag, not a funnel-payment-method flag. The funnel checkout itself always uses the Solidgate iframe regardless of paywall flag — that's by design. PayPal upsells (u15.1.x family) implement the **double_confirmation** mechanic on the upsell page itself: first click on Confirm Payment fires `pr_webapp_upsell_payment_intent_click` and opens a "Confirm your payment" popup; second click in the popup fires the actual purchase events.
+
+The executor now supports this end-to-end (verified 2026-04-30 on u15.1.3). The earlier "fallback to Solidgate" finding was technically true but irrelevant — the test was looking for a PayPal payment form on the funnel side, when the actual PayPal-channel signal lives in the upsell mechanic.
+
+(Original finding kept below for context.)
+
+---
+
 ## chat-v3/email funnel — `?paywall=paypal` falls back to Solidgate
 
 **Observed:** 2026-04-30. Three runs verified, all the same outcome:

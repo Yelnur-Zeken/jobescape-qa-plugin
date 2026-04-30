@@ -157,7 +157,26 @@ u15.1.1:
     paypal:
       page_1: { full: 139.99, default: 69.99, chase: 55.99 }
   verified: false
-  notes: "PayPal-only. Tool needs double_confirmation handler + sandbox credentials before full automation; check_ui works today with --paywall paypal."
+  notes: "Returned 'UH OH... technical difficulties' for a Solidgate-paid + paywall=paypal-flagged test user 2026-04-30. Likely needs strict PayPal-cohort registration. Use u15.1.3 as a more permissive proxy when verifying double_confirmation mechanic."
+
+u15.1.3:
+  offer: "The Unlimited AI Toolkit for 2026 (PayPal A/B test)"
+  pages: 1
+  mechanic: double_confirmation
+  channels: [paypal]
+  subscriptions: ["4week"]  # other subs not yet probed
+  status: active
+  prices:
+    paypal:
+      page_1: { full: 99.99, default: 39.99 }   # chase price not yet probed
+  verified: true
+  verified_date: 2026-04-30
+  buy_cta_text: "Confirm Payment"
+  popup_cta_text: "Confirm Payment"
+  notes:
+    - First Confirm Payment click → pr_webapp_upsell_payment_intent_click + popup opens.
+    - Popup shows summary ($39.99 Unlimited AI Tools + Free Marketing GPT bundled).
+    - Second Confirm Payment in popup → purchase_click + successful_purchase.
 
 u15.1.2:
   offer: "The Unlimited AI Toolkit for 2026 (PayPal 1w)"

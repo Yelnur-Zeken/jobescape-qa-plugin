@@ -48,28 +48,34 @@ primer:
 
 paypal:
   description: |
-    PayPal channel. Available on PayPal-only versions (u15.1.1, u15.1.2,
-    u13.0.1, u15.3.1) and as a co-channel on others (per xlsx).
+    PayPal channel. The `paywall=paypal` flag marks the user as PayPal
+    cohort for downstream UPSELL routing — it does NOT change how the
+    funnel itself is paid. Funnel checkout always uses the Solidgate
+    iframe; you fund it with the regular 4242 success card. PayPal-only
+    upsells (u15.1.1, u15.1.2, u15.1.3, u13.0.1, u15.3.1) then use the
+    double_confirmation purchase mechanic on the upsell page itself.
   mechanic: double_confirmation
   cards:
-    note: True PayPal flow uses sandbox account login, not card input.
-  funnel_url_param: "?paywall=paypal"
-  automation_status: needs_funnel_investigation
+    funnel: "4242424242424242"   # funnel pays via Solidgate iframe regardless
+    note: PayPal flow's "PayPal-ness" is in the upsell mechanic, not in card input.
+  funnel_url_param: "&paywall=paypal"   # appended at SELLING PAGE, not entry
+  automation_status: supported
   notes:
-    - ⚠️ DISCOVERY 2026-04-30 (3 attempts, all same outcome) —
-      `?paywall=paypal` on the chat-v3/email funnel DOES NOT route to a real
-      PayPal flow, regardless of:
-        * where in the URL the flag is placed (entry vs selling page),
-        * which subscription tile is selected (1w / 4w / 12w),
-        * order of query params.
-      The funnel always renders the same Solidgate iframe
-      (`#solid-payment-form-iframe`) + "Confirm Payment" CTA. By contrast
-      `?paywall=primer` works correctly on the same funnel — so the flag
-      mechanism is real, just paypal isn't wired up here.
-    - Working hypothesis to test next: PayPal might be UPSELL-side on
-      jobescape's codebase. Pay funnel via Solidgate (4242), then visit
-      a PayPal-only upsell like /additional_offer?upsell_version=u15.1.2 and
-      see if THAT page's purchase flow uses PayPal regardless of how the
-      funnel was paid.
-    - Until the trigger is confirmed, `--paywall paypal` in the executor is
-      effectively a no-op (logs the intent but actually runs Solidgate).
+    - "Verified empirically 2026-04-30 on u15.1.3:"
+    - "  flow: walk funnel → on selling page navigate to current URL +"
+    - "        &paywall=paypal → click GET MY PLAN → fill Solidgate iframe"
+    - "        with 4242 → register → land on /additional_offer → override"
+    - "        URL to ?upsell_version=u15.1.3"
+    - "  on click 'Confirm Payment' on the upsell page:"
+    - "    1) pr_webapp_upsell_payment_intent_click fires"
+    - "    2) 'Confirm your payment' popup opens with summary + another"
+    - "       Confirm Payment button"
+    - "  on click of the popup's Confirm Payment:"
+    - "    3) pr_webapp_upsell_purchase_click fires"
+    - "    4) pr_webapp_upsell_successful_purchase fires"
+    - "  (NOTE: original spec said `purchase_intent_click` but the actual"
+    - "  event is `payment_intent_click` — confirmed empirically.)"
+    - "u15.1.1 returned 'UH OH... technical difficulties' for our Solidgate-"
+    - "registered user. Likely u15.1.1 enforces strict PayPal-cohort access"
+    - "while u15.1.3 is more permissive. Test u15.1.1 with a real PayPal"
+    - "registration to confirm; or surface to product team."
