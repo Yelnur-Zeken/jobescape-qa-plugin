@@ -75,6 +75,29 @@ mixed_path_examples:
   - description: All pages skipped (no chase) — fallthrough exit flow.
     decisions: "skip,skip,skip"
 
+# Diagnostic probes (NOT part of the default plan — run on demand when a
+# PayPal upsell's mechanic is unclear or when a buy click silently does
+# nothing).
+diagnostic_probes:
+  - id: scroll_gate_probe
+    description: |
+      Verifies whether the FIRST unaided click on "Confirm Payment" scrolls
+      the user to the price (scroll_gated_one_click pattern) vs fires
+      purchase events (plain one_click). Captures scrollY before/after,
+      events fired, and screenshots. Use when a new PayPal upsell ships and
+      you don't yet know its mechanic. Currently hard-coded for
+      u1.1.3_claude — copy + edit VERSION constant to probe other versions.
+    invocation: "npx tsx src/probes/scroll-gate-claude.ts"
+    artifact: "reports/<runId>-probe-scroll-claude/probe-report.json"
+    duration_min: 6
+    when_to_run: |
+      - A new PayPal-only upsell ships and `versions.yaml` doesn't have
+        verified mechanic.
+      - check_works on a PayPal version fails with "buy clickable but no
+        purchase events" — probe distinguishes scroll-gated from broken.
+      - Validating that an executor change to scroll_gated_one_click
+        handler still aligns with the actual page behavior.
+
 custom_assertions:
   description: |
     User-supplied custom checks beyond base scenarios. Examples:

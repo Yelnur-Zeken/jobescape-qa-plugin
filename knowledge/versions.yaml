@@ -249,6 +249,38 @@ u12.0.0:
     page_1: { full: 99.99, default: 49.99, chase: 39.99 }
   verified: false
 
+u1.1.3_claude:
+  offer: "The Complete Claude Bundle for 2026 (2-page, PayPal A/B test)"
+  pages: 2
+  mechanic: scroll_gated_one_click   # confirmed empirically 2026-04-30
+  channels: [paypal]
+  subscriptions: ["4week"]   # other subs not yet probed
+  status: ab_test
+  buy_cta_text: "Confirm Payment"
+  prices:
+    paypal_4w:
+      page_1: { standard: 69.99, chase: 55.99, anchor_full: 139.99 }
+      page_2: { standard: 29.99, chase: 19.99, anchor_full: 89.99 }
+      page_2_after_full_skip_p1: { standard: 1.99 }   # conditional
+  conditional_pricing: true
+  verified: true
+  verified_date: 2026-04-30
+  notes:
+    - Page 1 theme = Claude bundle ("The Complete Claude Bundle for 2026").
+    - Page 2 theme = generic "AI Toolkit + Marketing GPT" (NOT Claude-themed).
+    - Mechanic = scroll_gated_one_click (PayPal-channel pattern). Buy button is gated until user has scrolled past the price; pre-scroll click only triggers a scroll. After scroll, ONE click fires purchase_click + successful_purchase. NO confirmation popup.
+    - View event payload includes new field upsell_type="claude_bundle" (page 1) — first version with this field. Tell data team.
+    - Page 1 chase modal CTA = "Got it".
+    - Page 2 chase modal CTA = "Got it".
+    - Post-purchase modal CTA = "Continue".
+    - Already-purchased modal CTA = "Next step"; modal text contains "already purchased".
+    - Conditional pricing (empirically confirmed):
+        * buy,buy            → page 2 std = $29.99
+        * skip_chase_buy,*   → page 2 std = $29.99
+        * skip_chase_skip,*  → page 2 std = $1.99 (drops because page 1 was fully refused)
+    - Page 2 at $1.99 still has the chase modal but its CTA exits the funnel ("Get started" → main app onboarding). At $29.99 the chase modal opens chase variant ($19.99) normally.
+    - Funnel runs through Solidgate iframe (4242 card) — PayPal-cohort signal lives on the upsell side, not the funnel.
+
 u1.0.0:
   offer: "Prompts Library"
   pages: 1

@@ -44,4 +44,14 @@ In all three: the visible payment form is `iframe[name="solid-payment-form-ifram
 
 **Alternative hypothesis worth testing next:** maybe PayPal-only **upsell** versions (e.g. u15.1.2) trigger their own PayPal flow at the upsell page step regardless of how the funnel was paid — i.e. PayPal is upsell-side, not funnel-side, on this codebase. Test by paying funnel via Solidgate (4242), then visiting `/additional_offer?upsell_version=u15.1.2`, click buy, see whether PayPal appears.
 
+## RESOLVED — `u1.1.3_claude` Confirm Payment "broken" was scroll_gated_one_click mechanic, not a bug
+
+**Initial finding (2026-04-30):** Buy button on `u1.1.3_claude` page 1 appeared completely non-functional in 4 independent runs — click registered but no purchase events fired and no double_confirmation popup opened.
+
+**Resolution:** This version uses the **`scroll_gated_one_click`** mechanic (the PayPal pattern documented in `channels.yaml`). The buy button only acts as one_click AFTER the user has scrolled past the price element. Pre-scroll, the click is consumed as a "scroll-to-price" gesture (no events). The executor wasn't satisfying the gate because `clickBuyButton` clicks without scrolling first.
+
+**Fix applied:** Added `scroll_gated_one_click` to `PurchaseMechanic` union; `doBuy` and `runCheckAlreadyPurchasedScenario` now call `scrollPriceIntoView` before clicking buy on versions with this mechanic. Re-runs (buy,buy / skip_chase_buy,skip_chase_buy / buy,skip_chase_skip / check_already_purchased) all PASS empirically.
+
+**Lesson for future PayPal upsells:** Don't assume `double_confirmation`. If a PayPal upsell has no popup after the first click, the mechanic is most likely `scroll_gated_one_click`. The fastest distinguishing test: scroll the page programmatically before clicking — if a single click then fires purchase events, it's scroll-gated.
+
 ## (Add new anomalies below as the tool surfaces them.)
