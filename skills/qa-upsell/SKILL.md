@@ -101,6 +101,8 @@ cd ~/jobescape-auto-qa && HEADED=1 npx tsx src/index.ts \
   --version <V> --variant <var> --scenario <S> --paywall <P> [--decisions <D>]
 ```
 
+**Cross-platform note:** the `~/jobescape-auto-qa` path resolves correctly on macOS/Linux and on Windows under Git Bash or PowerShell (`~` → `$env:USERPROFILE`). On Windows `cmd.exe` it doesn't expand — if the run shell is cmd, use `cd %USERPROFILE%\jobescape-auto-qa` instead. `HEADED=1` env var works the same on every platform via the npm script (`HEADED=1 ...` for bash; PowerShell needs `$env:HEADED=1; npx tsx ...`). The plugin's runner doesn't care which shell — pick what fits the environment.
+
 Examples:
 - `--version u15.4.3 --scenario check_works --paywall solidgate --subscription 4week --decisions buy,buy,buy`
 - `--version u13.0.4 --scenario check_works --paywall solidgate --decisions skip_chase_skip,skip` (page 2 has no chase → plain `skip`)

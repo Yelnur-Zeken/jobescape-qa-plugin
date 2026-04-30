@@ -32,6 +32,8 @@ The plugin:
 
 ## Install
 
+In Claude Code (any platform):
+
 ```
 /plugin marketplace add https://github.com/Yelnur-Zeken/jobescape-qa-plugin
 /plugin install jobescape-qa@yelnur-zeken
@@ -39,11 +41,19 @@ The plugin:
 
 Then run the executor installer (one-time):
 
-```
+**macOS / Linux:**
+```bash
 bash <(curl -sL https://raw.githubusercontent.com/Yelnur-Zeken/jobescape-qa-plugin/main/install.sh)
 ```
 
-This clones `Yelnur-Zeken/jobescape-auto-qa` to `~/jobescape-auto-qa` and prepares Chromium.
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/Yelnur-Zeken/jobescape-qa-plugin/main/install.ps1 | iex
+```
+
+**Windows (Git Bash):** same as macOS command above — `bash <(curl …)` works in Git Bash.
+
+This clones `Yelnur-Zeken/jobescape-auto-qa` to `~/jobescape-auto-qa` (macOS/Linux) or `%USERPROFILE%\jobescape-auto-qa` (Windows) and prepares Chromium.
 
 ## Use
 
@@ -68,6 +78,7 @@ The skill walks you through the rest — channel-specific rules apply automatica
 
 ## Limitations honest about
 
+- **Cross-platform.** Tested on macOS; works on Windows (PowerShell or Git Bash) via the `install.ps1` script. The executor itself is Node + Playwright, no platform-specific code.
 - **Headed mode is required.** The funnel error-pages out under default headless config in some sessions; we use a real Chromium window. Means QA runs need a desktop session, not pure CI.
 - **Each run takes ~5 minutes** — 4 to walk the funnel + register, 1 to test the upsell. A 6-scenario plan = ~30 min wall time. The Chromium window is busy that whole time.
 - **No shared run history yet.** Each colleague's runs live in their own `~/jobescape-auto-qa/reports/`. Future: shared S3/git remote.
