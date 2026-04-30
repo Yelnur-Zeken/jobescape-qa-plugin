@@ -62,8 +62,8 @@ The skill walks you through the rest — channel-specific rules apply automatica
 
 ## Coverage
 
-**Channels supported:** Solidgate ✓ · Primer (planned) · PayPal (manual only — OAuth-gated)
-**Subscriptions supported:** 4-week (default). 1-week and 12-week need executor work.
+**Channels supported:** Solidgate ✓ · Primer (URL flag works, iframe filler pending) · PayPal (URL flag works, double_confirmation walker pending). All three accept `--paywall <name>` on the executor; today only Solidgate runs the full purchase scenarios end-to-end.
+**Subscriptions supported:** 4-week (default). 1-week and 12-week need executor work to click the correct plan tile on the selling page.
 **Versions baked in:** every entry in the company Upsells.xlsx as of 2026-04-30, plus empirically-verified `u13.0.4` and `u15.4.3` (full price matrices + buy-CTA copy + chase modal text discovered through automated runs).
 
 ## Limitations honest about
@@ -71,8 +71,8 @@ The skill walks you through the rest — channel-specific rules apply automatica
 - **Headed mode is required.** The funnel error-pages out under default headless config in some sessions; we use a real Chromium window. Means QA runs need a desktop session, not pure CI.
 - **Each run takes ~5 minutes** — 4 to walk the funnel + register, 1 to test the upsell. A 6-scenario plan = ~30 min wall time. The Chromium window is busy that whole time.
 - **No shared run history yet.** Each colleague's runs live in their own `~/jobescape-auto-qa/reports/`. Future: shared S3/git remote.
-- **Vision checks need `ANTHROPIC_API_KEY` env var** in `~/jobescape-auto-qa/.env`. Optional — the tool falls back to "ambiguous, needs human review" without it.
-- **PayPal automation is blocked.** PayPal sandbox login uses OAuth + sometimes 2FA; reliably fails on the auth screen. Recommend manual QA for PayPal-only versions.
+- **Vision checks use your own Claude.** When the skill needs a visual verdict ("is the disclaimer text correct", "is the layout broken"), it reads the screenshot via the Read tool — you, the running Claude, have vision built in. No external Vision API key needed. (`ANTHROPIC_API_KEY` in `.env` is left over from an earlier executor-side stub and is fully optional.)
+- **PayPal automation needs a walker for the `double_confirmation` mechanic** (popup/scroll → second confirm click) plus sandbox PayPal credentials. The `?paywall=paypal` URL flag works today and the funnel walker reaches the PayPal flow — just the second-confirm click isn't wired yet. `check_ui` against PayPal-only versions works.
 
 ## Contributing
 

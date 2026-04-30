@@ -28,28 +28,36 @@ primer:
     success: TBD_RECON_NEEDED
     decline_subsequent: TBD_RECON_NEEDED
   mechanic: one_click
-  automation_status: not_yet_supported
+  funnel_url_param: "?paywall=primer"
+  automation_status: needs_iframe_recon
   pricing_note: |
     Empirically Primer-channel upsells often show ~30-40% higher prices
     vs the Solidgate variant of the same version (per Yelnur).
   notes:
-    - Tool's funnel walker currently forces ?paywall=solidgate.
-    - To support Primer: recon the Primer iframe, add a primer payment
-      adapter, parameterise --channel in the runner.
+    - Executor supports --paywall primer (the URL flag works); the funnel
+      walker reaches the Primer iframe step.
+    - Primer iframe is at https://sdk.primer.io/web/hosted-pages/... — has
+      its own field structure (different from Solidgate). Walker needs a
+      Primer-specific iframe filler.
+    - First step: run --paywall primer once to capture the iframe DOM, then
+      add the field selectors.
 
 paypal:
   description: |
-    PayPal channel. Specific to versions like u15.1.1, u15.1.2 (PayPal-only).
+    PayPal channel. Available on PayPal-only versions (u15.1.1, u15.1.2,
+    u13.0.1, u15.3.1) and as a co-channel on others.
   mechanic: double_confirmation
   cards:
-    note: PayPal does not use card-input fields — uses PayPal account login.
-  automation_status: BLOCKED
-  reason: |
-    PayPal sandbox login flow uses OAuth + may include 2FA. Even with sandbox
-    accounts, automation reliably fails at the PayPal-side auth screen.
+    note: PayPal flow uses sandbox account login, not card input.
+  funnel_url_param: "?paywall=paypal"
+  automation_status: needs_walker_extension
   notes:
-    - Recommend manual QA for PayPal-only versions.
-    - Tool can still verify check_ui (page renders, view event fires) without
-      completing purchase, but check_works/check_decline are not automatable.
-    - On PayPal upsells the buy click triggers a popup/scroll-to-confirm
-      sequence (this is what "double_confirmation" mechanic refers to in xlsx).
+    - Executor supports --paywall paypal (URL flag works) but walker needs
+      a double_confirmation handler: after first buy click, a popup/scroll
+      reveals a second confirm CTA — the walker has to find and click it.
+    - Sandbox login: PayPal staging accepts test PayPal accounts; need to
+      confirm Jobescape's sandbox setup (test PayPal email/password).
+    - Once double_confirmation is wired + sandbox creds are known, all
+      PayPal-only upsells become fully automatable.
+    - Until then: --scenario check_ui + --paywall paypal works (just verifies
+      the PayPal flow page renders); check_works requires the walker.

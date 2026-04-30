@@ -61,9 +61,11 @@ After receiving answers, **save the new version to `versions.yaml`** with `verif
 
 Read `knowledge/channels.yaml`. Apply the rules:
 
-- **Solidgate** — automation supported. Use card 4242 for funnel registration on success runs, card 4123 for funnel registration on `check_decline` runs. Forces `?paywall=solidgate` in funnel URL (already in executor).
-- **Primer** — **automation not yet supported in the executor**. If the user picks Primer, surface this and ask if they want to (a) wait for Primer support to ship, (b) run on Solidgate as a proxy if the version also serves Solidgate, or (c) do manual QA. Do NOT silently fall back.
-- **PayPal** — **automation BLOCKED** (OAuth-gated). For PayPal-only versions (u15.1.1, u15.1.2, u13.0.1, u15.3.1), the tool can only run `check_ui` (page renders, view event fires). All purchase scenarios must be done manually. Surface this clearly.
+- **Solidgate** (`--paywall solidgate`) — full automation. Use card 4242 for funnel registration on success runs, card 4123 for funnel registration on `check_decline` runs.
+- **Primer** (`--paywall primer`) — funnel walker reaches the Primer iframe step but the iframe filler is not yet implemented (different field structure than Solidgate). For now: `check_ui` runs, `check_works` does not. Tell the user.
+- **PayPal** (`--paywall paypal`) — funnel walker reaches the PayPal flow but the `double_confirmation` walker (popup/scroll → second confirm click) is not yet implemented. Sandbox PayPal credentials also need to be confirmed with the team. For now: `check_ui` runs, `check_works` does not. Tell the user.
+
+Always pick the right `--paywall` flag based on the channel the user picked (or the version's available channels). Do NOT silently fall back to solidgate if the user asked for paypal/primer — be explicit about what's automatable.
 
 ---
 
@@ -96,14 +98,17 @@ For each scenario in the plan, run via Bash:
 
 ```bash
 cd ~/jobescape-auto-qa && HEADED=1 npx tsx src/index.ts \
-  --version <V> --variant <var> --scenario <S> [--decisions <D>]
+  --version <V> --variant <var> --scenario <S> --paywall <P> [--decisions <D>]
 ```
 
 Examples:
-- `--version u15.4.3 --scenario check_works --decisions buy,buy,buy`
-- `--version u13.0.4 --scenario check_works --decisions skip_chase_skip,skip` (page 2 has no chase → use plain `skip`)
-- `--version u15.4.3 --scenario check_already_purchased`
-- `--version u15.4.3 --scenario check_decline`
+- `--version u15.4.3 --scenario check_works --paywall solidgate --decisions buy,buy,buy`
+- `--version u13.0.4 --scenario check_works --paywall solidgate --decisions skip_chase_skip,skip` (page 2 has no chase → plain `skip`)
+- `--version u15.1.1 --scenario check_ui --paywall paypal` (PayPal-only versions today are limited to check_ui until the double_confirmation walker is added)
+- `--version u15.4.3 --scenario check_already_purchased --paywall solidgate`
+- `--version u15.4.3 --scenario check_decline --paywall solidgate`
+
+**`--paywall` defaults to solidgate** if omitted. Always pass it explicitly to make the run record the intended channel.
 
 Each run takes ~5 minutes. **Run them serially** (the executor opens a single Chromium window — parallel runs would conflict). Tell the user which run is in flight (`Запускаю прогон 3/6: skip_chase_buy × 3...`).
 
@@ -152,7 +157,9 @@ For each user-supplied custom check (from Step 1/2), give a yes/no/ambiguous ans
 
 ### E. Bugs / failed checks
 
-List anything that failed. For visual checks (modal not found, layout broken), open the relevant screenshot via Read tool and show inline.
+List anything that failed. For visual checks (modal not found, layout broken, copy looks wrong, image quality, sticky-CTA-position visually verified), **use the Read tool on the screenshot PNG yourself** — you (the running Claude) have vision. Look at the image, answer the visual question, report the verdict. No external Vision API needed; no `ANTHROPIC_API_KEY` required. This is the explicit way visual checks happen in v0.
+
+For each visual assertion the user requested ("verify disclaimer says X", "is the price typo'd", "is layout broken on mobile viewport"), open the relevant screenshot file from `~/jobescape-auto-qa/reports/<runId>/` (e.g. `page-0.png`, `page-1.png`, `upsell-final.png`) and answer concretely with what you saw.
 
 ### F. Open questions
 

@@ -157,7 +157,7 @@ u15.1.1:
     paypal:
       page_1: { full: 139.99, default: 69.99, chase: 55.99 }
   verified: false
-  notes: "PayPal-only — automation BLOCKED. Manual QA only."
+  notes: "PayPal-only. Tool needs double_confirmation handler + sandbox credentials before full automation; check_ui works today with --paywall paypal."
 
 u15.1.2:
   offer: "The Unlimited AI Toolkit for 2026 (PayPal 1w)"
@@ -170,7 +170,7 @@ u15.1.2:
     paypal:
       page_1: { full: 99.99, default: 39.99, chase: 29.99 }
   verified: false
-  notes: "PayPal-only — automation BLOCKED. Manual QA only."
+  notes: "PayPal-only. Tool needs double_confirmation handler + sandbox credentials before full automation; check_ui works today with --paywall paypal."
 
 u15.3.0:
   offer: "AI Toolkit + Prompts Library (Primer A/B test)"
@@ -198,7 +198,7 @@ u15.3.1:
       page_1: { full: 139.99, default: 69.99, chase: 55.99 }
       page_2: { full: 89.99, default: 29.99, chase: 22.99 }
   verified: false
-  notes: "PayPal-only — automation BLOCKED. Manual QA only."
+  notes: "PayPal-only. Tool needs double_confirmation handler + sandbox credentials before full automation; check_ui works today with --paywall paypal."
 
 # Compliance variants (typically duplicates of base versions with different disclaimers)
 u16.1.0: { offer: "AI Toolkit (compliance test, welcome screen)", duplicate_of: u13.0.0, status: inactive, verified: false }
