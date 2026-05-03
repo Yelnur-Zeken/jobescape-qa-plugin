@@ -10,11 +10,14 @@
         "source": "github",
         "repo": "Yelnur-Zeken/jobescape-qa-plugin"
       },
-      "description": "Automated QA for jobescape upsell flows — base-scenario matrix + AI-guided question flow for new versions.",
-      "version": "0.1.0",
+      "description": "Automated QA for jobescape — upsells, onboardings, unsub flow, and ad-hoc feature checks via the Playwright-based executor.",
+      "version": "0.2.0",
       "keywords": [
         "qa",
         "upsell",
+        "onboarding",
+        "unsubscribe",
+        "feature-test",
         "jobescape",
         "automation"
       ]

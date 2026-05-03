@@ -1,0 +1,85 @@
+# Known onboarding versions on stage.jobescape.me. Source: empirical recon
+# 2026-05-03 + product-team description from Yelnur. Add new versions here
+# as they ship; mark verified=true once /qa-onboarding has run them.
+#
+# URL pattern (verified 2026-05-03):
+#   https://stage.jobescape.me/onboarding?onboarding_version=<version>
+# Auth:
+#   Required. The flow registers a fresh user via funnel before navigating.
+#
+# Per-version test guidance: every onboarding deserves multiple decision
+# strategies (pick_first, pick_last, all_skip) to surface UI affordance bugs
+# the user mentioned (e.g. a Skip button appearing where it shouldn't be).
+
+o1.0.0_claude:
+  audience: "Claude-native users"
+  story: "Creates an AI research project + presentation for the user"
+  first_screen:
+    headline: "Welcome to certified Claude Master"
+    subheadline: "This is the most valuable skill you can learn right now"
+    primary_cta: "Start"
+  expected_flow_summary: |
+    User starts → onboarding builds them through a Claude-skill curriculum,
+    culminates in producing a research artifact + presentation for them.
+  qa_focus:
+    - "Verify the research-generation step actually produces output"
+    - "Verify the presentation step renders/exports as expected"
+    - "Visual: Claude-branded surface elements, no Anthropic-trademark misuse"
+  status: active
+  verified: false  # set to true once /qa-onboarding has done a full walk
+  recon_date: 2026-05-03
+  notes:
+    - "Multiple 403 console errors observed on initial load (recon 2026-05-03). Investigate whether these are real auth issues or expected (e.g., third-party assets without origin allowance)."
+
+o2.2.0:
+  audience: "General — user picks their interest"
+  story: "User picks an interest (AI Influencer / Chatbot Creation / etc.) and the onboarding adapts to that interest"
+  first_screen:
+    headline: "Hello! Before we dive in, let's personalize your learning path"
+    subheadline: ""
+    primary_cta: "Get started"
+  expected_flow_summary: |
+    User clicks Get started → presented with interest-selection screen with
+    multiple options (AI Influencer, Chatbot Creation, etc.). After picking,
+    onboarding branches into the selected niche's specific flow.
+  variants:
+    - "AI Influencer" # specific path, content TBD
+    - "Chatbot Creation" # specific path, content TBD
+    - "(others — discover at runtime)"
+  qa_focus:
+    - "Run /qa-onboarding multiple times with --onboarding-strategy pick_first AND pick_last to cover different interest variants"
+    - "For each interest variant: verify the niche-specific content actually loads (no fallback to generic)"
+    - "Verify Skip behaviour matches spec (some interest paths may NOT allow skipping certain workflow tests)"
+  status: active
+  verified: false
+  recon_date: 2026-05-03
+
+o3.0.0:
+  audience: "Google-search audience (likely paid traffic)"
+  story: "Explains how freelance/AI-agent work works, then walks user through creating their first bot"
+  first_screen:
+    headline: "Hello! Before we dive in, let's personalize your learning path to b…"  # truncated in recon, full text TBD
+    subheadline: ""
+    primary_cta: "Get started"
+  expected_flow_summary: |
+    Educational pages (what freelance is / how AI agents make money) →
+    hands-on bot-creation step → user has their first bot.
+  qa_focus:
+    - "Verify the educational content makes sense (no broken images, complete copy)"
+    - "Critical: bot-creation step must complete successfully"
+    - "User flagged: 'test workflow of automation bot' should NOT be skippable on at least one onboarding — verify by running with --onboarding-strategy all_skip and checking which steps the walker can/can't skip"
+  status: active
+  verified: false
+  recon_date: 2026-05-03
+
+# ─── Other versions (catch-all per user note: chatbot or influencer focused) ───
+# As new versions surface in Confluence/PRDs, add stubs here so the QAer can
+# pick them up directly. The /qa-onboarding skill will discover empirical
+# structure on first run and update notes.
+
+# Example stub for future use:
+# o4.0.0:
+#   audience: "TBD"
+#   story: "TBD"
+#   status: planned
+#   verified: false

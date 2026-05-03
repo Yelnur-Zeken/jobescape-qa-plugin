@@ -1,0 +1,74 @@
+# Unsub-flow QA scenarios. Loaded by /qa-unsubflow skill before each run.
+#
+# URL pattern (verified 2026-05-03):
+#   https://stage.jobescape.me/my-profile/manage-subscriptions?from=settings&page=first
+# Auth: required. Executor registers a fresh user (with paid 4-week sub) via
+# funnel each run, then navigates here.
+
+entry_screen_baseline:
+  url: "https://stage.jobescape.me/my-profile/manage-subscriptions?from=settings&page=first"
+  recon_date: 2026-05-03
+  headings_seen:
+    - "Manage subscription"
+    - "Your subscription plan"
+    - "Need a break? Pause your plan"
+    - "Stay in control with your renewal reminder"
+  buttons_seen:
+    - "Pause subscription"
+    - "Turn off auto-renewal"
+  notable_copy:
+    - "Status: Trialing"
+    - "Introductory price: $1"
+    - "Subscription price: $38.95"
+    - "Renewal date: <date> (date varies per run)"
+  notes:
+    - "URL has page=first — implies multi-step funnel with page=second/third/etc. for the actual cancellation flow."
+    - "Both entry buttons likely lead to a multi-step form (reason picker → confirmation → final action)."
+
+base_strategies:
+  - id: pause_first
+    description: |
+      Click "Pause subscription" entry button, walk all follow-up screens
+      (presumably duration picker → confirmation). Validates the pause flow
+      exists, completes, and shows confirmation.
+    invocation: "--scenario check_unsubflow --unsub-strategy pause_first"
+    verified: false  # set to true after first successful run
+
+  - id: turn_off_first
+    description: |
+      Click "Turn off auto-renewal" entry button, walk all follow-up screens
+      (likely reason picker → win-back offer → confirmation). The full
+      unsub funnel — high-priority happy path.
+    invocation: "--scenario check_unsubflow --unsub-strategy turn_off_first"
+    verified: false
+
+  - id: explore_buttons
+    description: |
+      Generic walk: click first available button on each screen until
+      reaching a terminus. Useful for discovering screens and surfacing
+      unintended dead-ends or loops.
+    invocation: "--scenario check_unsubflow --unsub-strategy explore_buttons"
+    verified: false
+
+  - id: pick_last
+    description: |
+      For multi-option screens (e.g., reason-for-cancelling list), pick the
+      LAST option instead of first. Combined with pause_first/turn_off_first
+      this gives coverage of branch options.
+    invocation: "--scenario check_unsubflow --unsub-strategy pick_last"
+    verified: false
+
+# What the skill should look for during walk:
+qa_focus:
+  - "Every reason-for-cancelling option is clickable and advances the flow (no dead options)"
+  - "Win-back offer screens have working Accept/Decline paths"
+  - "Final confirmation screen confirms the action took effect"
+  - "On entry: Pause and Turn-off buttons both work and don't share state (clicking one shouldn't pre-fill the other's flow)"
+  - "Pricing on confirmation screens matches user's actual plan ($1 trialing → $38.95 4w in current recon)"
+  - "No 4xx/5xx network errors during walk (executor reports these in checks[])"
+  - "Console errors are not flooded (>3× steps walked is suspicious)"
+
+# Scenarios to add as we learn:
+# - paused_then_resume: pause subscription, then back through flow to resume
+# - already_paused: walk URL when subscription is already paused (different UI)
+# - fully_cancelled: walk URL post-cancellation (different UI)

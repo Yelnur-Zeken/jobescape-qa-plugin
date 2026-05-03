@@ -1,0 +1,74 @@
+# Guide for the /qa-feature skill. The skill drives ad-hoc testing of any
+# feature on stage.jobescape.me based on a free-form spec from the user.
+#
+# Auth model:
+#   stage.jobescape.me requires login for all non-public routes. The
+#   executor's check_feature scenario registers a fresh user via funnel
+#   before navigating to the feature URL — no manual login step needed.
+#
+# Stage URL surface (partial — discover at runtime):
+auth_required_routes:
+  - "/" → redirects to /auth/login
+  - "/onboarding"
+  - "/works" (post-purchase landing? — verify)
+  - "/additional_offer" (upsell)
+  - "/my-profile/*"
+  - "/academy/*" (likely — TBD)
+  - "/profile/*" (likely — TBD)
+
+public_routes:
+  - "/auth/login"
+  - "/auth/register"
+
+# Account-creation entry — same one used by other QA skills:
+fresh_account_signup_url: "https://funnels.jobescape.me/chat-v3/email"
+
+# How the skill should behave:
+workflow:
+  step1_understand: |
+    Read the user's spec. Identify:
+      - Which page/feature they want tested (URL or rough location)
+      - What "should work" means (specific actions to take, specific assertions to verify)
+      - Any known prior context (it's a new feature from PR #X, etc.)
+  step2_clarify: |
+    Ask up to 3 questions if the spec is too vague:
+      - Exact URL or path to navigate to (if they only said "the new course-detail page")
+      - Specific actions/assertions (if they said "make sure it works")
+      - Whether to test logged-in or logged-out path (default: logged-in via fresh-user funnel registration)
+  step3_run: |
+    Drive the executor:
+      cd ~/jobescape-auto-qa && HEADED=1 npx tsx src/index.ts \
+        --scenario check_feature \
+        --feature-url https://stage.jobescape.me/<path> \
+        --feature-spec "<user description>" \
+        [--feature-mode snapshot|explore_buttons|explore_links] \
+        [--max-steps N]
+  step4_interpret: |
+    Read the report.json:
+      - walkedSteps[] — each step's URL, headings, buttons, links, inputs,
+                        bodyPreview, screenshotPath, console+network errors
+      - checks[] — page_loaded, no_4xx_5xx, no_console_error_flood
+      - notes[] — feature spec echoed back + summary stats
+    For each user-supplied assertion: open the relevant screenshot via the
+    Read tool (visual checks) OR scan walkedSteps[].bodyPreview/visibleButtons
+    (text checks), then answer concretely with evidence.
+  step5_followup: |
+    If a single check_feature run isn't enough (e.g., the user wants to
+    click through a multi-step flow with specific decisions), re-run with
+    --feature-mode explore_buttons or chain navigation by editing the URL
+    and re-running.
+
+modes:
+  snapshot:
+    description: "Navigate to the URL, take a single full-page screenshot + dump structure. Best for static-page assertions."
+  explore_buttons:
+    description: "After landing, click first visible button on each successive screen until URL stops changing. Best for short happy-path walks."
+  explore_links:
+    description: "Like explore_buttons but follows first <a href> on each page. Best for navigation/site-map verification."
+
+# Anti-patterns:
+anti_patterns:
+  - "Don't claim a feature works without checking the screenshot/structure dump."
+  - "Don't paper over network errors — surface them in the dashboard."
+  - "Don't infer a button is disabled from absence in visibleButtons[] alone — it might be off-viewport. Open the screenshot to confirm."
+  - "Don't auto-PASS based on no-console-errors — many pages have analytics noise. Verify the actual user-facing assertion."
